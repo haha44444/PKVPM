@@ -3,3 +3,4 @@
 [bool]: public: True
 [int]: age: 30
 [list]: favorite_books: The Great Gatsby|[str], To Kill a Mockingbird|[str], Brave New World|[str]
+[ml_str]: say: im haha44444|[str], im xx years old|[str], im mtf|[str]

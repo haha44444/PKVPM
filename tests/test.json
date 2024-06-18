@@ -1,11 +1,3 @@
 {
-    "name": "John Doe",
-    "gender": "Male",
-    "public": true,
-    "age": 30,
-    "favorite_books": [
-        "The Great Gatsby",
-        "To Kill a Mockingbird",
-        "Brave New World"
-    ]
+    "say": "im haha44444|[str], im xx years old|[str], im mtf|[str]"
 }

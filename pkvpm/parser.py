@@ -18,6 +18,19 @@ import yaml
 from typing import Dict, Union
 
 
+# class MultiLineStr(str):
+#     pass
+#
+#
+# def multi_line_literal_presenter(dumper, data):
+#     return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='|')
+#
+#
+# yaml.add_representer(MultiLineStr, multi_line_literal_presenter)
+#
+MultiLineStr = type('MultiLineStr', (str,), {})
+
+
 class Parser:
 
     def __init__(self):
@@ -30,6 +43,7 @@ class Parser:
             "int": int,
             "float": float,
             "str": str,
+            "ml_str": str,
         }
 
     def linear_format_generator(self, kv_data, prefix=""):
@@ -40,10 +54,18 @@ class Parser:
         :return: 线性格式的键值对列表/Linear format list of key-value pairs
         """
         if isinstance(kv_data, dict):
+
             for key, value in kv_data.items():
                 if isinstance(value, list):
                     # 如果值是列表，则将其转换为逗号分隔的字符串，并记录每个值的类型
                     # If the value is a list, convert it to a comma-separated string and record the type of each value
+                    value_with_types = ", ".join(
+                        f"{item}|[{type(item).__name__}]" for item in value
+                    )
+                    yield f"{prefix}.{key}" if prefix else key, value_with_types, list
+                elif isinstance(value, MultiLineStr):
+                    # 如果值是多行字符串，则将其转换为逗号分隔的字符串，并记录每个值的类型
+                    # If the value is a multi list str, convert it to a comma-separated string and record the type of each value
                     value_with_types = ", ".join(
                         f"{item}|[{type(item).__name__}]" for item in value
                     )
@@ -90,6 +112,7 @@ class Parser:
         # 返回线性格式数据/Return linear format data
         return result
 
+    # pkvpm列表
     def translate_list(self, value):
         """
         将列表字符串转换为列表，并保留每个元素的类型/Convert list string to list and retain the type of each element
@@ -101,18 +124,27 @@ class Parser:
         ]  # 跳过空字符串的元素
         result = []
         for item in items:
+            # 判断字符串是否为列表
             if isinstance(item, list) and len(item) == 2:
                 item_value, item_type = item
+                # 判断字符串是否为整数
                 if item_type == "int]":
                     result.append(int(item_value))
+                # 判断字符串是否为浮点数
                 elif item_type == "float]":
                     result.append(float(item_value))
+                # 判断字符串是否为布尔值
                 elif item_type == "bool]":
                     result.append(item_value.lower() == "true")
+                # 判断字符串是否为多行字符串
+                elif item_type == "ml_str]":
+                    result.append(item_value)
+
+                # 否则全为字符串
                 else:
                     result.append(item_value)
             else:
-                result.append(item)  # 不是列表类型或者不带类型信息的项目，直接添加值
+                result.append(item)  # 不是列表或者多行字符串类型或者不带类型信息的项目，直接添加值
         return result
 
     def add_translation(self, path, value, value_type, data=None):
@@ -191,7 +223,6 @@ class Parser:
 
 
 if __name__ == "__main__":
-
     # 一个pkvpm文件的例子:
     # [str]: key1: value1
     # [list]: key2: value2 | [str], value3 | [str], value4 | [str]
